@@ -6,6 +6,7 @@ import { searchGithub, searchGithubUser } from '../api/API';
 type CandidateCardProps = {
     onPotentialList?: boolean;
     alreadyDenied?: boolean;
+    currentCandidate?: Candidate | null;
 };
 
 const CandidateCard: React.FC<CandidateCardProps> = ({ onPotentialList, alreadyDenied }) => {

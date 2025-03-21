@@ -1,71 +1,66 @@
-// import type React from 'react';
-// import Candidate from '../interfaces/Candidate.interface';
-// import CandidateCard from './CandidateCard';
-
-// interface deniedCandidatesProps {
-//     deniedCandidates: Candidate[];
-//     removeCandidate: 
-//     ((
-//         e: React.MouseEvent<SVGSVGElement, MouseEvent>,
-//         currentlyOnPotentialList: boolean | null | undefined,
-//         currentlyOnAlreadyDenied: boolean | null | undefined,
-//         name: string | null
-//     ) => void) 
-//     | null;
-// }
-
-// const DeniedCandidates = ({
-//     deniedCandidates,
-//     removeCandidate,
-// }: deniedCandidatesProps) => {
-//     return (
-//         <ul>
-//             {deniedCandidates.map((candidate) => (
-//                 <CandidateCard
-//                     currentCandidate={candidate}
-//                     removeCandidate={removeCandidate}
-//                     alreadyDenied={true}
-//                 />
-//             ))}
-//         </ul>
-//     );
-// };
-
-// export default DeniedCandidates;
-
-import type React from 'react';
+import { useEffect, useState } from 'react';
 import Candidate from '../interfaces/Candidate.interface';
-import CandidateCard from './CandidateCard';
 
-interface DeniedCandidatesProps {
-    deniedCandidates: Candidate[];
-    removeCandidate: 
-      | ((
-          e: React.MouseEvent<Element, MouseEvent>,
-          currentlyOnPotentialList: boolean | null | undefined,
-          currentlyOnAlreadyDenied: boolean | null | undefined,
-          name?: string
-        ) => void)
-      | null;
-}
+const DeniedCandidates = () => {
+    const [deniedCandidates, setDeniedCandidates] = useState<Candidate[]>([]);
 
-const noop = () => {};
+    // Load denied candidates from local storage on mount
+    useEffect(() => {
+        const storedCandidates = JSON.parse(localStorage.getItem("savedDeniedCandidates") || "[]");
+        setDeniedCandidates(storedCandidates);
+    }, []);
 
-const DeniedCandidates = ({
-    deniedCandidates,
-    removeCandidate = noop, // Default no-op function
-}: DeniedCandidatesProps) => {
+    // Function to remove a candidate from the list and update local storage
+    const removeCandidate = (username: string) => {
+        const updatedCandidates = deniedCandidates.filter(candidate => candidate.username !== username);
+        setDeniedCandidates(updatedCandidates);
+        localStorage.setItem("savedDeniedCandidates", JSON.stringify(updatedCandidates));
+    };
+
     return (
-        <ul>
-            {deniedCandidates.map((candidate) => (
-                <CandidateCard
-                    key={candidate.username} // Ensure a unique key
-                    currentCandidate={candidate}
-                    removeCandidate={removeCandidate ?? undefined} // Avoid passing null
-                    alreadyDenied={true}
-                />
-            ))}
-        </ul>
+        <div>
+            <h2>Denied Candidates</h2>
+            {deniedCandidates.length > 0 ? (
+                <table className="candidate-table">
+                    <thead>
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Email</th>
+                            <th>Profile</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {deniedCandidates.map((candidate) => (
+                            <tr key={candidate.username}>
+                                <td>
+                                    <img src={candidate.avatar} alt="Avatar" width="50" />
+                                </td>
+                                <td>{candidate.name || "N/A"}</td>
+                                <td>@{candidate.username}</td>
+                                <td>{candidate.company || "N/A"}</td>
+                                <td>{candidate.location || "N/A"}</td>
+                                <td>{candidate.email || "N/A"}</td>
+                                <td>
+                                    <a href={candidate.htmlUrl} target="_blank" rel="noopener noreferrer">
+                                        View Profile
+                                    </a>
+                                </td>
+                                <td>
+                                    <button onClick={() => removeCandidate(candidate.username)}>Remove</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p>No denied candidates yet.</p>
+            )}
+        </div>
     );
 };
 
