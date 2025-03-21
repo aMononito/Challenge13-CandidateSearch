@@ -1,78 +1,69 @@
-import { useState } from 'react';
-
-import { searchGithub, searchGithubUser } from '../api/API';
-import Candidate from '../interfaces/Candidate.interface';
+import { useState, useEffect } from 'react';
 import CandidateCard from '../components/CandidateCard';
+import Candidate from '../interfaces/Candidate.interface';
+import { searchGithub, searchGithubUser } from '../api/API';
+import { PiArrowArcLeftFill, PiArrowArcRightFill } from 'react-icons/pi';
 
 const CandidateSearch = () => {
- const [currentCandidate, setCandidates] = useState<Candidate>({
-    Name: '',
-    Username: '',
-    Avatar: '',
-    Email: '',
-    Html_url: '',
-    Company: '',
-    Location: '',
- });
+  const [currentCandidate, setCandidate] = useState<Candidate | null>(null);
 
-  const addToPotentialCandidates = () => {
-    let parsedCandidates: Candidate[] = [];
-    const storedCandidates = localStorage.getItem('potentialCandidates');
-    if (typeof storedCandidates === 'string') {
-      parsedCandidates = JSON.parse(storedCandidates);
-    }
-    parsedCandidates.push(currentCandidate);
-    localStorage.setItem('potentialCandidates', JSON.stringify(parsedCandidates));
-  };
-
-  const denyCandidate = () => {
-    let parsedCandidates: Candidate[] = [];
-    const storedCandidates = localStorage.getItem('alreadyDenied');
-    if (typeof storedCandidates === 'string') {
-      parsedCandidates = JSON.parse(storedCandidates);
-    }
-    parsedCandidates.push(currentCandidate);
-    localStorage.setItem('alreadyDenied', JSON.stringify(parsedCandidates));
-  };
-
+  // Function to fetch a candidate from GitHub API
   const fetchCandidate = async () => {
-    const data = await searchGithub();
-    const randomCandidate = data[Math.floor(Math.random() * data.length)];
-    const candidateData = await searchGithubUser(randomCandidate.login);
-    setCandidates({
-      Name: candidateData.name,
-      Username: candidateData.login,
-      Avatar: candidateData.avatar_url,
-      Email: candidateData.email,
-      Html_url: candidateData.html_url,
-      Company: candidateData.company,
-      Location: candidateData.location,
-    });
-  }
+    try {
+      const candidates = await searchGithub();
+      if (candidates.length === 0) return;
+
+      const randomCandidate = candidates[Math.floor(Math.random() * candidates.length)];
+      const candidateData = await searchGithubUser(randomCandidate.login);
+
+      setCandidate({
+        name: candidateData.name,
+        username: candidateData.login,
+        avatar: candidateData.avatar_url,
+        email: candidateData.email,
+        htmlUrl: candidateData.html_url,
+        company: candidateData.company,
+        location: candidateData.location
+      });
+    } catch (error) {
+      console.error("Error fetching candidate:", error);
+    }
+  };
+
+  // Fetch a candidate when the component loads
+  useEffect(() => {
+    fetchCandidate();
+  }, []);
 
   return (
-    <section>
-      <CandidateCard
-        currentCandidate={currentCandidate}
-        addToPotentialCandidates={addToPotentialCandidates}
-        denyCandidate={denyCandidate}
-      />
-      <button onClick={fetchCandidate}>Find a Candidate</button>
+    <section className="candidateSearch">
+      <h1 className="pageHeader">Candidate Search</h1>
+      <h2 style={{ margin: '16px 0' }}>Find a candidate to add to your potential list.</h2>
+
+      <section className="canButton">
+        {currentCandidate && <CandidateCard currentCandidate={currentCandidate} />}
+        <button onClick={fetchCandidate}>Find a Candidate</button>
+      </section>
+
+      <section className="nextCandidate">
+        <div className="candidateNav">
+          {/* Previous Candidate - Placeholder for potential functionality */}
+          <PiArrowArcLeftFill 
+            style={{ fontSize: '40px', cursor: 'pointer' }} 
+            className="prev-icon"
+            onClick={() => setCandidate(null)} 
+          />
+          
+          {/* Next Candidate - Fetches new candidate */}
+          <PiArrowArcRightFill 
+            style={{ fontSize: '40px', cursor: 'pointer' }} 
+            className="next-icon"
+            onClick={fetchCandidate} // Calls fetchCandidate to get a new candidate
+          />
+        </div>
+      </section>
     </section>
   );
 };
 
 export default CandidateSearch;
-
-
-
-
-
-
-
-
-
-
-
-
-
